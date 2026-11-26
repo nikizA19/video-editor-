@@ -25,7 +25,7 @@
 
 **2. Инсталирай ffmpeg** (програмата, която реално реже видеото):
 - **Windows:** отвори PowerShell и напиши `winget install Gyan.FFmpeg`
-- **Mac:** `brew install ffmpeg` (ако нямаш brew: https://brew.sh)
+- **Mac:** `brew install python ffmpeg` (ако нямаш brew: https://brew.sh). За надписите `start.sh` сам добавя `whisper-cpp`, ако трябва.
 
 **3. Свали проекта:** зелен бутон **Code → Download ZIP** в GitHub и го разархивирай.
 

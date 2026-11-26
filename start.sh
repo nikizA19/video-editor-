@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mac / Linux: run ./start.sh
+# Mac / Linux: run  bash start.sh
 # Everything is inside main() so bash reads the whole file before running it:
 # the updater may replace this file while it runs.
 main() {
@@ -19,6 +19,21 @@ main() {
     .venv/bin/python update.py
   fi
   .venv/bin/pip install -q -r requirements.txt || exit 1
+
+  # Speech recognition for captions: faster-whisper if this Python supports it,
+  # otherwise the whisper.cpp tool, which works with any Python.
+  if ! .venv/bin/python -c "import faster_whisper" 2>/dev/null \
+     && ! command -v whisper-cli >/dev/null 2>&1; then
+    if ! .venv/bin/pip install -q -r requirements-whisper.txt 2>/dev/null; then
+      if command -v brew >/dev/null 2>&1; then
+        echo "Инсталирам whisper.cpp за надписите (еднократно)…"
+        brew install whisper-cpp || echo "(Без надписи, докато не се инсталира whisper-cpp.)"
+      else
+        echo "(Без надписи: инсталирай whisper.cpp, напр. brew install whisper-cpp.)"
+      fi
+    fi
+  fi
+
   if [ -f .env ]; then set -a; . ./.env; set +a; fi
   exec .venv/bin/python -m studio
 }
