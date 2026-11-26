@@ -13,8 +13,8 @@ REM running it: the updater may replace this file while it runs.
   )
   if not exist .venv (
     echo Първо пускане: инсталирам нужното, отнема 1-2 минути...
-    py -3 -m venv .venv 2>nul || python -m venv .venv || (
-      echo Инсталирай Python от python.org и сложи отметка на "Add python.exe to PATH".
+    py -3.12 -m venv .venv 2>nul || py -3.13 -m venv .venv 2>nul || py -3.11 -m venv .venv 2>nul || python -m venv .venv || (
+      echo Инсталирай Python 3.12 от python.org и сложи отметка на "Add python.exe to PATH".
       pause
       exit /b 1
     )

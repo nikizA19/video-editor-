@@ -20,12 +20,12 @@
 
 ## Как да го пуснеш (еднократно)
 
-**1. Инсталирай Python** (ако го нямаш): https://www.python.org/downloads/
+**1. Инсталирай Python 3.12** (по-новите още не се поддържат от разпознаването на реч): https://www.python.org/downloads/release/python-31210/
 На Windows при инсталацията **сложи отметка на „Add python.exe to PATH“**.
 
 **2. Инсталирай ffmpeg** (програмата, която реално реже видеото):
 - **Windows:** отвори PowerShell и напиши `winget install Gyan.FFmpeg`
-- **Mac:** `brew install ffmpeg` (ако нямаш brew: https://brew.sh)
+- **Mac:** `brew install python@3.12 ffmpeg` (ако нямаш brew: https://brew.sh)
 
 **3. Свали проекта:** зелен бутон **Code → Download ZIP** в GitHub и го разархивирай.
 
