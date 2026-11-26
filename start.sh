@@ -4,9 +4,19 @@
 # the updater may replace this file while it runs.
 main() {
   cd "$(dirname "$0")" || exit 1
-  if ! command -v ffmpeg >/dev/null 2>&1; then
-    echo "ffmpeg липсва. Mac: brew install ffmpeg   |   Linux: sudo apt install ffmpeg"
+  # Homebrew's plain ffmpeg can't draw captions (no libass); ffmpeg-full can.
+  if command -v brew >/dev/null 2>&1 && [ ! -x "$(brew --prefix)/opt/ffmpeg-full/bin/ffmpeg" ] \
+     && ! ffmpeg -hide_banner -filters 2>/dev/null | grep -q " ass "; then
+    echo "Инсталирам ffmpeg-full (за надписите, само веднъж)…"
+    brew install ffmpeg-full || echo "(Не стана, продължавам без надписи.)"
+  fi
+  if ! command -v ffmpeg >/dev/null 2>&1 && [ ! -x "$(brew --prefix 2>/dev/null)/opt/ffmpeg-full/bin/ffmpeg" ]; then
+    echo "ffmpeg липсва. Mac: brew install ffmpeg-full   |   Linux: sudo apt install ffmpeg"
     exit 1
+  fi
+  if [ -d .venv ] && ! .venv/bin/python -c "import sys" >/dev/null 2>&1; then
+    echo "Старата инсталация е счупена (обновен Python), правя я наново…"
+    rm -rf .venv
   fi
   if [ ! -d .venv ]; then
     echo "Първо пускане: инсталирам нужното (отнема 1-2 минути)…"

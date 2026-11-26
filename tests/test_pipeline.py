@@ -48,7 +48,7 @@ def _make_clip(path: Path) -> None:
     subprocess.run(cmd, check=True)
 
 
-def _fake_transcript(path, model_size="small", language=None):
+def _fake_transcript(path, model_size="small", language=None, log=None):
     words = []
     for i, line in enumerate(LINES):
         start = i * (TALK + GAP)
@@ -89,7 +89,7 @@ def test_full_edit(project):
     assert len(tl["removed_takes"]) == 1
     assert (project / "output" / "timeline.json").exists()
     ass = (project / "work" / "captions.ass").read_text("utf-8")
-    assert "3 TRIKA" in ass and "welcome" in ass
+    assert "3 TRIKA" in ass and "welcome" in ass.lower()
 
 
 def test_vertical_no_captions(project):
@@ -109,7 +109,7 @@ def test_transitions_render(project, monkeypatch):
         plan = real(*a, **k)
         for i, e in enumerate(plan.segments):
             if i:
-                e.transition_in = ["fade", "whoosh_slide", "flash"][i % 3]
+                e.transition_in = ["fade", "slide", "whip", "flash", "dip_black", "zoom", "glitch"][i % 7]
                 e.sfx = "whoosh"
         return plan
 
