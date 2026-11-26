@@ -8,104 +8,137 @@
   :root {
     --bg: #0f1115; --panel: #171a21; --panel2: #1e222b; --line: #2a2f3a;
     --text: #e8eaf0; --muted: #9aa1b1; --accent: #ffd43b; --accent-ink: #1a1400;
-    --ok: #51cf66; --err: #ff6b6b; --radius: 12px;
+    --ok: #51cf66; --err: #ff6b6b; --warn: #ffa94d; --radius: 12px;
+    --c-static: #5c7cfa; --c-zoom: #ffd43b; --c-crash: #ff6b6b; --c-move: #ff922b;
+    --c-broll: #20c997; --c-pop: #f783ac; --c-lt: #cc5de8; --c-cap: #3b4252;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
          font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   header { display: flex; align-items: center; gap: 12px; padding: 14px 20px;
-           border-bottom: 1px solid var(--line); }
+           border-bottom: 1px solid var(--line); flex-wrap: wrap; }
   header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
   .pill { font-size: 12px; padding: 3px 10px; border-radius: 99px; background: var(--panel2);
           color: var(--muted); border: 1px solid var(--line); }
   .pill.on { color: var(--ok); border-color: #2f5f3a; }
+  .pill.bad { color: var(--warn); border-color: #6b4a22; }
   header .spacer { flex: 1; }
   header button { background: none; border: 1px solid var(--line); color: var(--muted);
-                  border-radius: 8px; padding: 6px 10px; cursor: pointer; }
-  main { display: grid; grid-template-columns: 300px 1fr 360px; gap: 16px; padding: 16px 20px;
-         max-width: 1500px; margin: 0 auto; }
-  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+                  border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  header button:hover { color: var(--text); border-color: var(--muted); }
+  main { display: grid; grid-template-columns: 290px minmax(0, 1fr) 380px; gap: 16px; padding: 16px 20px;
+         max-width: 1600px; margin: 0 auto; }
+  @media (max-width: 1150px) { main { grid-template-columns: 1fr; } }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-           padding: 14px; }
+           padding: 14px; min-width: 0; }
   .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
               margin: 0 0 10px; font-weight: 600; }
-  .drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center;
-          cursor: pointer; color: var(--muted); transition: .15s; margin-bottom: 8px; }
+  .drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 12px; text-align: center;
+          cursor: pointer; color: var(--muted); transition: .15s; margin-bottom: 8px; font-size: 14px; }
   .drop:hover, .drop.over { border-color: var(--accent); color: var(--text); background: #1d1b12; }
   .drop b { color: var(--text); display: block; margin-bottom: 2px; }
-  .files { list-style: none; padding: 0; margin: 0 0 16px; font-size: 13px; }
+  .drop small { font-size: 12px; }
+  .files { list-style: none; padding: 0; margin: 0 0 14px; font-size: 13px; }
   .files li { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px;
-              background: var(--panel2); border-radius: 6px; margin-bottom: 4px;
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .files li button { background: none; border: 0; color: var(--muted); cursor: pointer; }
+              background: var(--panel2); border-radius: 6px; margin-bottom: 4px; }
+  .files li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .files li button { background: none; border: 0; color: var(--muted); cursor: pointer; flex: none; }
   .files li button:hover { color: var(--err); }
-  .stage { display: flex; flex-direction: column; gap: 12px; }
+  .stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .warnings { display: flex; flex-direction: column; gap: 8px; }
+  .warning { background: #2a1f12; border: 1px solid #6b4a22; color: #ffd8a8; border-radius: 10px;
+             padding: 10px 12px; font-size: 13.5px; }
+  .warning code { background: #0008; padding: 1px 6px; border-radius: 5px; color: #fff; user-select: all; }
   .screen { background: #000; border-radius: var(--radius); aspect-ratio: 16/9; display: flex;
             align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--line); }
   .screen video { width: 100%; height: 100%; object-fit: contain; }
   .screen .empty { color: var(--muted); text-align: center; padding: 20px; }
-  .bar { height: 8px; background: var(--panel2); border-radius: 99px; overflow: hidden; }
+  .runrow { display: flex; align-items: center; gap: 10px; }
+  .bar { flex: 1; height: 8px; background: var(--panel2); border-radius: 99px; overflow: hidden; }
   .bar div { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+  .clock { font: 12px ui-monospace, Menlo, monospace; color: var(--muted); min-width: 42px; text-align: right; }
+  .stop { background: none; border: 1px solid #6b2a2a; color: var(--err); border-radius: 8px;
+          padding: 4px 10px; cursor: pointer; font: inherit; font-size: 13px; }
   .log { font: 12.5px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--muted);
-         max-height: 170px; overflow: auto; white-space: pre-wrap; }
+         max-height: 170px; overflow: auto; white-space: pre-wrap; margin-top: 10px; }
   .summary { display: none; }
   .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
   .stat { background: var(--panel2); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
   .stat b { color: var(--accent); }
-  textarea { width: 100%; min-height: 150px; resize: vertical; background: var(--panel2);
+  .styles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .style { background: var(--panel2); border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 4px;
+           text-align: center; cursor: pointer; font-size: 13px; color: var(--text); font-family: inherit; }
+  .style .e { font-size: 22px; display: block; line-height: 1.2; }
+  .style:hover { border-color: var(--muted); }
+  .style.on { border-color: var(--accent); background: #26230f; }
+  .blurb { font-size: 12.5px; color: var(--muted); min-height: 36px; margin: 8px 2px 10px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; margin-bottom: 14px; }
+  .seg button { flex: 1; background: var(--panel2); color: var(--muted); border: 0; padding: 7px 4px;
+                cursor: pointer; font: inherit; font-size: 13px; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .seglabel { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  textarea { width: 100%; min-height: 120px; resize: vertical; background: var(--panel2);
              color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 10px;
              font: inherit; }
   textarea:focus { outline: none; border-color: var(--accent); }
+  .prev { font-size: 12.5px; color: var(--muted); background: var(--panel2); border-radius: 8px;
+          padding: 7px 10px; margin-bottom: 8px; white-space: pre-wrap; max-height: 90px; overflow: auto; }
+  .prev b { color: var(--text); }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
   .chip { font-size: 12.5px; padding: 5px 10px; border-radius: 99px; background: var(--panel2);
-          border: 1px solid var(--line); color: var(--text); cursor: pointer; }
+          border: 1px solid var(--line); color: var(--text); cursor: pointer; font-family: inherit; }
   .chip:hover { border-color: var(--accent); }
-  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .opts label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
-  .opts label, .opts select { min-width: 0; width: 100%; }
+  details.more { margin-bottom: 12px; }
+  details.more summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .opts label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   select { background: var(--panel2); color: var(--text); border: 1px solid var(--line);
-           border-radius: 8px; padding: 7px; font: inherit; font-size: 13px; }
+           border-radius: 8px; padding: 7px; font: inherit; font-size: 13px; width: 100%; min-width: 0; }
   .check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 6px 0; color: var(--text); }
   .go { width: 100%; padding: 13px; border: 0; border-radius: 10px; background: var(--accent);
-        color: var(--accent-ink); font-weight: 700; font-size: 16px; cursor: pointer; }
+        color: var(--accent-ink); font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 8px; }
   .go:disabled { opacity: .5; cursor: wait; }
   .btn { display: inline-block; padding: 9px 14px; border-radius: 8px; background: var(--panel2);
          border: 1px solid var(--line); color: var(--text); text-decoration: none; font-size: 14px; }
-  .tips { font-size: 13px; color: var(--muted); }
+  .tips { font-size: 13px; color: var(--muted); padding-left: 18px; }
   .tips li { margin-bottom: 6px; }
   .tips b { color: var(--text); }
   .err { color: var(--err); }
   .tl { display: none; }
+  .tl-grid { display: grid; grid-template-columns: 96px minmax(0, 1fr); }
   .tl-scroll { overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; }
   .tl-inner { position: relative; min-width: 100%; cursor: pointer; user-select: none; }
-  .tl-row { display: flex; align-items: center; height: 30px; border-bottom: 1px solid var(--line); }
-  .tl-row:last-child { border-bottom: 0; }
-  .tl-lane { position: relative; flex: 1; height: 100%; }
-  .tl-labels { position: sticky; left: 0; }
-  .tl-grid { display: grid; grid-template-columns: 92px 1fr; }
+  .tl-row { position: relative; height: 30px; border-bottom: 1px solid var(--line); }
+  .tl-row:last-of-type { border-bottom: 0; }
   .tl-names div { height: 30px; display: flex; align-items: center; font-size: 12px; color: var(--muted);
                   border-bottom: 1px solid var(--line); white-space: nowrap; }
-  .tl-names div:first-child, .tl-ruler { height: 22px !important; }
-  .tl-ruler { position: relative; border-bottom: 1px solid var(--line); font-size: 10.5px; color: var(--muted); }
+  .tl-names div:first-child { height: 22px; }
+  .tl-names div:last-child { border-bottom: 0; }
+  .tl-ruler { position: relative; height: 22px; border-bottom: 1px solid var(--line); font-size: 10.5px; color: var(--muted); }
   .tl-ruler span { position: absolute; top: 3px; transform: translateX(-50%); }
   .tl-ruler span:first-child { transform: none; }
-  .tl-ruler span::after { content: ""; position: absolute; left: 50%; top: 14px; height: 5px; border-left: 1px solid var(--line); }
   .tl-item { position: absolute; top: 5px; bottom: 5px; border-radius: 5px; font-size: 11px; line-height: 20px;
              padding: 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #0f1115; }
   .tl-item:hover { outline: 2px solid #fff; z-index: 2; }
-  .clip-none { background: #5c7cfa; color: #fff; }
-  .clip-punch_in { background: var(--accent); }
-  .clip-slow_zoom_in, .clip-slow_zoom_out { background: #ff922b; }
-  .tl-cap { background: #3b4252; color: var(--text); }
-  .tl-pop { background: #f783ac; }
-  .tl-mark { position: absolute; top: 4px; transform: translateX(-50%); font-size: 15px; line-height: 20px; }
-  .tl-mark:hover { transform: translateX(-50%) scale(1.3); }
+  .cam-static { background: var(--c-static); color: #fff; }
+  .cam-zoom { background: var(--c-zoom); }
+  .cam-crash { background: var(--c-crash); }
+  .cam-move { background: var(--c-move); }
+  .tl-broll { background: var(--c-broll); }
+  .tl-cap { background: var(--c-cap); color: var(--text); }
+  .tl-pop { background: var(--c-pop); }
+  .tl-lt { background: var(--c-lt); color: #fff; }
+  .tl-fx { background: #ffffff30; color: var(--text); top: 7px; bottom: 7px; }
+  .tl-mark { position: absolute; top: 4px; transform: translateX(-50%); font-size: 15px; line-height: 20px; z-index: 1; }
+  .tl-mark:hover { transform: translateX(-50%) scale(1.3); z-index: 3; }
   .tl-head { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; pointer-events: none;
-             box-shadow: 0 0 6px #000; z-index: 3; }
+             box-shadow: 0 0 6px #000; z-index: 4; }
   .tl-info { font-size: 13px; color: var(--muted); min-height: 20px; margin-top: 8px; }
   .tl-info b { color: var(--text); }
   .tl-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 6px; }
   .tl-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .tl-extra { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -113,6 +146,7 @@
 <header>
   <h1>🎬 AI Видео Студио</h1>
   <span id="mode" class="pill">…</span>
+  <span id="speech" class="pill hidden"></span>
   <span class="spacer"></span>
   <button id="newProject" title="Започни нов проект на чисто">+ Нов проект</button>
 </header>
@@ -121,40 +155,49 @@
   <!-- LEFT: uploads -->
   <section class="panel">
     <h2>1. Качи файловете</h2>
-    <div class="drop" data-kind="footage"><b>🎥 Твоите клипове</b>Пусни видеата тук или натисни<br><small>в реда, в който да вървят</small></div>
+    <div class="drop" data-kind="footage"><b>🎥 Твоите клипове</b>Пусни видеата тук или натисни<br><small>вървят по реда на имената</small></div>
     <ul class="files" id="list-footage"></ul>
 
-    <div class="drop" data-kind="references"><b>✨ Примери за стил</b>Видео или снимка, която да копирам<br><small>по желание</small></div>
+    <div class="drop" data-kind="broll"><b>🖼️ B-roll</b>Снимки и кратки клипове за вмъкване<br><small>по желание · кръсти ги по темата, напр. „монтаж.jpg“</small></div>
+    <ul class="files" id="list-broll"></ul>
+
+    <div class="drop" data-kind="references"><b>✨ Пример за стил</b>Видео или снимка, която да копирам<br><small>по желание · взимам темпото и цвета</small></div>
     <ul class="files" id="list-references"></ul>
 
-    <div class="drop" data-kind="music"><b>🎵 Фонова музика</b>MP3 / WAV<br><small>по желание, сама се снишава под гласа</small></div>
+    <div class="drop" data-kind="music"><b>🎵 Фонова музика</b>MP3 / WAV / M4A<br><small>по желание · сама се снишава под гласа</small></div>
     <ul class="files" id="list-music"></ul>
     <input type="file" id="picker" multiple hidden>
   </section>
 
   <!-- CENTER: preview + progress -->
   <section class="stage">
-    <div class="screen" id="screen"><div class="empty">Тук ще се появи готовото видео.<br>Качи клип, напиши какво искаш и натисни „Монтирай“.</div></div>
+    <div class="warnings" id="warnings"></div>
+    <div class="screen" id="screen"><div class="empty">Тук ще се появи готовото видео.<br>Качи клип, избери стил и натисни „Монтирай“.</div></div>
     <div class="panel tl" id="timeline">
       <h2>Какво добавих (timeline)</h2>
       <div class="tl-grid">
-        <div class="tl-names">
-          <div></div><div>🎬 Кадри</div><div>✨ Преходи</div><div>🔊 Звуци</div><div>🏷️ Текст</div><div>💬 Надписи</div>
-        </div>
+        <div class="tl-names" id="tlNames"></div>
         <div class="tl-scroll" id="tlScroll"><div class="tl-inner" id="tlInner"></div></div>
       </div>
       <div class="tl-info" id="tlInfo">Посочи нещо, за да видиш детайли. Цъкни, за да отидеш там във видеото.</div>
       <div class="tl-legend">
-        <span><i style="background:#5c7cfa"></i>нормален кадър</span>
-        <span><i style="background:var(--accent)"></i>zoom in</span>
-        <span><i style="background:#ff922b"></i>бавен zoom</span>
-        <span><i style="background:#f783ac"></i>заглавие</span>
-        <span id="tlRemoved"></span>
+        <span><i style="background:var(--c-static)"></i>статичен кадър</span>
+        <span><i style="background:var(--c-zoom)"></i>zoom / dolly</span>
+        <span><i style="background:var(--c-crash)"></i>crash zoom / удар</span>
+        <span><i style="background:var(--c-move)"></i>панорама / плаваща</span>
+        <span><i style="background:var(--c-broll)"></i>b-roll</span>
+        <span><i style="background:var(--c-pop)"></i>текст</span>
+        <span><i style="background:var(--c-lt)"></i>име</span>
       </div>
+      <div class="tl-extra" id="tlExtra"></div>
     </div>
     <div class="panel">
-      <div class="bar"><div id="bar"></div></div>
-      <div class="log" id="log" style="margin-top:10px">Чакам те 🙂</div>
+      <div class="runrow">
+        <div class="bar"><div id="bar"></div></div>
+        <span class="clock" id="clock"></span>
+        <button class="stop hidden" id="stop">⏹ Спри</button>
+      </div>
+      <div class="log" id="log">Чакам те 🙂</div>
     </div>
     <div class="panel summary" id="summary">
       <h2>Готово</h2>
@@ -164,63 +207,81 @@
     </div>
   </section>
 
-  <!-- RIGHT: instructions -->
+  <!-- RIGHT: style + instructions -->
   <section class="panel">
-    <h2>2. Кажи какво искаш</h2>
-    <textarea id="instructions" placeholder="Напр.: Махни паузите и повторените дубли, сложи жълти надписи, zoom на важните моменти, whoosh при смяна на темата. Заглавие: 3 ТРИКА ЗА МОНТАЖ"></textarea>
+    <h2>2. Избери стил</h2>
+    <div class="styles" id="styles"></div>
+    <div class="blurb" id="blurb"></div>
+    <div class="seglabel">Колко ефекти</div>
+    <div class="seg" id="intensity">
+      <button data-v="low">Малко</button><button data-v="normal" class="on">Нормално</button><button data-v="high">Много</button>
+    </div>
+
+    <h2>3. Кажи какво искаш <small style="text-transform:none;letter-spacing:0">(по желание)</small></h2>
+    <div class="prev hidden" id="prev"></div>
+    <textarea id="instructions" placeholder="Напр.: Заглавие: 3 ТРИКА ЗА МОНТАЖ. Име: Иван Петров - видео монтажист. Crash zoom когато казвам числа, без музика."></textarea>
     <div class="chips" id="chips">
-      <span class="chip">✂️ Махни паузите и грешните дубли</span>
-      <span class="chip">💬 Надписи с главни букви</span>
-      <span class="chip">🔍 Повече zoom</span>
-      <span class="chip">🔊 Звукови ефекти при преходите</span>
-      <span class="chip">📱 Вертикално за TikTok / Reels</span>
-      <span class="chip">🎞️ Кино цветове</span>
-      <span class="chip">🏷️ Заглавие: </span>
+      <button class="chip" data-add="Заглавие: ">🏷️ Заглавие</button>
+      <button class="chip" data-add="Име: Име Фамилия - какво правиш">👤 Име отдолу</button>
+      <button class="chip" data-add="Crash zoom на важните думи">💥 Crash zoom</button>
+      <button class="chip" data-add="Повече ефекти">🔥 Повече ефекти</button>
+      <button class="chip" data-add="По-спокойно, по-малко ефекти">🧘 По-спокойно</button>
+      <button class="chip" data-add="Кино цветове и черни ленти">🎞️ Кино цветове</button>
+      <button class="chip" data-add="Вертикално за TikTok">📱 TikTok / Reels</button>
+      <button class="chip" data-add="Без звукови ефекти">🔇 Без звуци</button>
+      <button class="chip" data-add="Без музика">🎵 Без музика</button>
+      <button class="chip" data-add="Без надписи">💬 Без надписи</button>
     </div>
-    <div class="opts">
-      <label>Паузи
-        <select id="pauses">
-          <option value="normal">Махни (нормално)</option>
-          <option value="tight">Агресивно (бързо темпо)</option>
-          <option value="gentle">Меко</option>
-          <option value="off">Не махай</option>
-        </select></label>
-      <label>Формат
-        <select id="format">
-          <option value="original">Като оригинала</option>
-          <option value="vertical_9_16">9:16 TikTok / Reels / Shorts</option>
-          <option value="horizontal_16_9">16:9 YouTube</option>
-          <option value="square_1_1">1:1 Квадрат</option>
-        </select></label>
-      <label>Стил надписи
-        <select id="captionStyle">
-          <option value="bold_yellow">Жълти, удебелени</option>
-          <option value="clean_white">Чисто бели</option>
-          <option value="boxed">С тъмен фон</option>
-        </select></label>
-      <label>Език на говора
-        <select id="language">
-          <option value="">Разпознай сам</option>
-          <option value="bg">Български</option>
-          <option value="en">English</option>
-        </select></label>
-      <label>Разпознаване на реч
-        <select id="whisper">
-          <option value="small">Нормално</option>
-          <option value="base">Бързо</option>
-          <option value="medium">Най-точно (бавно)</option>
-        </select></label>
-    </div>
-    <label class="check"><input type="checkbox" id="captions" checked> Надписи</label>
+
+    <details class="more" id="more">
+      <summary>Още настройки</summary>
+      <div class="opts">
+        <label>Паузи
+          <select id="pauses">
+            <option value="auto">Според стила</option>
+            <option value="tight">Агресивно (бързо темпо)</option>
+            <option value="normal">Нормално</option>
+            <option value="gentle">Меко</option>
+            <option value="off">Не махай</option>
+          </select></label>
+        <label>Формат
+          <select id="format">
+            <option value="original">Като оригинала</option>
+            <option value="vertical_9_16">9:16 TikTok / Reels / Shorts</option>
+            <option value="horizontal_16_9">16:9 YouTube</option>
+            <option value="square_1_1">1:1 Квадрат</option>
+          </select></label>
+        <label>Надписи
+          <select id="captionStyle">
+            <option value="auto">Според стила</option>
+            <option value="bold_yellow">Жълти, удебелени</option>
+            <option value="clean_white">Чисто бели</option>
+            <option value="boxed">С тъмен фон</option>
+          </select></label>
+        <label>Език на говора
+          <select id="language">
+            <option value="">Разпознай сам</option>
+            <option value="bg">Български</option>
+            <option value="en">English</option>
+          </select></label>
+        <label>Разпознаване на реч
+          <select id="whisper">
+            <option value="small">Нормално</option>
+            <option value="base">Бързо</option>
+            <option value="medium">Най-точно (бавно)</option>
+          </select></label>
+      </div>
+      <label class="check"><input type="checkbox" id="captions" checked> Надписи</label>
+      <label class="check hidden" id="claudeRow"><input type="checkbox" id="useClaude" checked> Нека Claude реши монтажа</label>
+    </details>
     <label class="check"><input type="checkbox" id="revise"> Поправи последния монтаж (не започвай на чисто)</label>
-    <label class="check" id="claudeRow"><input type="checkbox" id="useClaude" checked> Нека Claude реши монтажа</label>
     <button class="go" id="go">Монтирай ▶</button>
 
     <h2 style="margin-top:20px">Съвети</h2>
     <ul class="tips">
-      <li><b>Говори ясно с кратки паузи</b> между изреченията. Паузите са местата, където режа.</li>
+      <li><b>Говори с кратки паузи</b> между изреченията. Паузите са местата, където режа.</li>
       <li><b>Сбъркаш ли, кажи изречението наново.</b> Повтореният дубъл се маха сам.</li>
-      <li><b>Пиши конкретно:</b> „zoom когато казвам числа“ работи по-добре от „направи го яко“.</li>
+      <li><b>Кръсти b-roll файловете по темата</b> („паузи.mp4“) и ги вмъквам, когато я споменеш.</li>
       <li><b>Пробвай бързо:</b> първо монтирай, после пиши поправки с „Поправи последния монтаж“.</li>
     </ul>
   </section>
@@ -228,74 +289,110 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-let project = null, pickerKind = null, polling = null;
+const KINDS = ["footage", "broll", "references", "music"];
+const ACCEPT = { footage: "video/*", broll: "video/*,image/*", references: "video/*,image/*", music: "audio/*,video/mp4" };
+let project = null, pickerKind = null, polling = null, currentJob = null, timelineData = null;
+let styles = [], lastInstructions = "";
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 async function api(path, opts = {}) {
   const r = await fetch(path, opts);
   if (!r.ok) {
     let msg = r.statusText;
     try { msg = (await r.json()).detail || msg; } catch {}
-    throw new Error(msg);
+    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
   }
   return r.json();
 }
 
-function storedProject() { try { return localStorage.getItem("studioProject"); } catch { return null; } }
-function storeProject(id) { try { localStorage.setItem("studioProject", id); } catch {} }
-
+// ------------------------------------------------------------------ project
 async function ensureProject(forceNew = false) {
-  const saved = forceNew ? null : storedProject();
+  const saved = forceNew ? null : store.get("studioProject");
   if (saved) {
-    try { const p = await api(`/api/projects/${saved}`); project = saved; render(p); return; } catch {}
+    try { const p = await api(`/api/projects/${saved}`); project = saved; renderProject(p, true); return; } catch {}
   }
   const p = await api("/api/projects", { method: "POST" });
-  project = p.id; storeProject(project);
-  render(await api(`/api/projects/${project}`));
+  project = p.id; store.set("studioProject", project);
+  renderProject(await api(`/api/projects/${project}`), true);
   $("screen").innerHTML = '<div class="empty">Нов проект. Качи клип, за да започнем.</div>';
   renderTimeline(null);
   $("summary").style.display = "none";
+  $("log").textContent = "Чакам те 🙂";
+  $("revise").checked = false; $("instructions").value = ""; updatePrev();
 }
 
-function render(p) {
-  for (const kind of ["footage", "references", "music"]) {
+function renderProject(p, first = false) {
+  for (const kind of KINDS) {
     const ul = $("list-" + kind); ul.innerHTML = "";
-    for (const name of p.files[kind]) {
+    for (const name of p.files[kind] || []) {
       const li = document.createElement("li");
-      li.textContent = name;
+      const span = document.createElement("span"); span.textContent = name; span.title = name;
       const x = document.createElement("button"); x.textContent = "✕"; x.title = "Махни";
       x.onclick = async () => {
         await api(`/api/projects/${project}/files/${kind}/${encodeURIComponent(name)}`, { method: "DELETE" });
-        render(await api(`/api/projects/${project}`));
+        renderProject(await api(`/api/projects/${project}`));
       };
-      li.appendChild(x); ul.appendChild(li);
+      li.append(span, x); ul.appendChild(li);
     }
   }
-  if (p.has_output && !$("screen").querySelector("video")) showVideo();
-  if (p.timeline && !timelineData) renderTimeline(p.timeline);
+  if (first) {
+    lastInstructions = p.last_instructions || "";
+    if (p.has_output) { showVideo(); $("revise").checked = true; }
+    else $("screen").innerHTML = '<div class="empty">Тук ще се появи готовото видео.<br>Качи клип, избери стил и натисни „Монтирай“.</div>';
+    renderTimeline(p.has_output ? p.timeline : null);
+    updatePrev();
+    if (p.job) { setRunning(true); poll(p.job); }
+  }
 }
 
 function showVideo() {
-  $("screen").innerHTML = `<video controls src="/api/projects/${project}/output?t=${Date.now()}"></video>`;
+  $("screen").innerHTML = `<video controls playsinline src="/api/projects/${project}/output?t=${Date.now()}"></video>`;
   $("download").href = `/api/projects/${project}/output?download=true`;
 }
 
-async function upload(kind, fileList) {
+// ------------------------------------------------------------------ uploads
+function upload(kind, fileList) {
   if (!fileList.length) return;
   const fd = new FormData();
-  for (const f of fileList) fd.append("files", f);
-  $("log").textContent = `Качвам ${fileList.length} файла…`;
-  try {
-    await api(`/api/projects/${project}/upload/${kind}`, { method: "POST", body: fd });
-    $("log").textContent = "Качено ✔";
-  } catch (e) { $("log").innerHTML = `<span class="err">Грешка при качване: ${e.message}</span>`; }
-  render(await api(`/api/projects/${project}`));
+  let bytes = 0;
+  for (const f of fileList) { fd.append("files", f); bytes += f.size; }
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", `/api/projects/${project}/upload/${kind}`);
+  const mb = (bytes / 1e6).toFixed(0);
+  $("log").textContent = `Качвам ${fileList.length} файла (${mb} MB)…`;
+  xhr.upload.onprogress = (e) => {
+    if (!e.lengthComputable) return;
+    const pc = Math.round(100 * e.loaded / e.total);
+    $("bar").style.width = pc + "%";
+    $("log").textContent = `Качвам ${fileList.length} файла… ${pc}%`;
+  };
+  xhr.onload = async () => {
+    $("bar").style.width = "0";
+    let body = {};
+    try { body = JSON.parse(xhr.responseText); } catch {}
+    if (xhr.status >= 400) {
+      $("log").innerHTML = `<span class="err">Грешка при качване: ${esc(body.detail || xhr.statusText)}</span>`;
+    } else {
+      $("log").textContent = "Качено ✔" + (body.skipped?.length ? ` (пропуснах: ${body.skipped.join(", ")})` : "");
+    }
+    renderProject(await api(`/api/projects/${project}`));
+  };
+  xhr.onerror = () => { $("log").innerHTML = '<span class="err">Качването прекъсна. Студиото още ли работи?</span>'; };
+  xhr.send(fd);
 }
 
 document.querySelectorAll(".drop").forEach((el) => {
   const kind = el.dataset.kind;
   el.onclick = () => {
     pickerKind = kind;
-    $("picker").accept = kind === "music" ? "audio/*" : kind === "references" ? "video/*,image/*" : "video/*";
+    $("picker").accept = ACCEPT[kind];
     $("picker").multiple = kind !== "music";
     $("picker").click();
   };
@@ -304,20 +401,78 @@ document.querySelectorAll(".drop").forEach((el) => {
   el.ondrop = (e) => { e.preventDefault(); el.classList.remove("over"); upload(kind, e.dataTransfer.files); };
 });
 $("picker").onchange = (e) => { upload(pickerKind, e.target.files); e.target.value = ""; };
+// A file dropped next to a drop zone would otherwise open in the browser and leave the studio.
+window.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("drop", (e) => e.preventDefault());
 
+// ------------------------------------------------------------------ styles
+function renderStyles(list, fallback) {
+  styles = list;
+  const chosen = store.get("studioStyle");
+  const current = list.some((s) => s.key === chosen) ? chosen : fallback;
+  $("styles").innerHTML = list.map((s) =>
+    `<button class="style" data-key="${s.key}" title="${esc(s.blurb)}"><span class="e">${s.emoji}</span>${esc(s.name)}</button>`).join("");
+  $("styles").querySelectorAll(".style").forEach((b) => b.onclick = () => pickStyle(b.dataset.key));
+  pickStyle(current, false);
+}
+function pickStyle(key, save = true) {
+  $("styles").querySelectorAll(".style").forEach((b) => b.classList.toggle("on", b.dataset.key === key));
+  const s = styles.find((x) => x.key === key);
+  $("blurb").textContent = s ? s.blurb : "";
+  if (save) store.set("studioStyle", key);
+}
+const chosenStyle = () => $("styles").querySelector(".style.on")?.dataset.key || "viral";
+
+$("intensity").querySelectorAll("button").forEach((b) => b.onclick = () => {
+  $("intensity").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+  store.set("studioIntensity", b.dataset.v);
+});
+(function restoreIntensity() {
+  const v = store.get("studioIntensity");
+  if (v) $("intensity").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.v === v));
+})();
+const intensity = () => $("intensity").querySelector("button.on")?.dataset.v || "normal";
+
+// ------------------------------------------------------------------ instructions
 document.querySelectorAll(".chip").forEach((c) => c.onclick = () => {
   const t = $("instructions");
-  const text = c.textContent.replace(/^\S+\s/, "");
-  t.value = (t.value.trim() ? t.value.trim() + (text.endsWith(": ") ? "\n" : ". ") : "") + text;
+  const add = c.dataset.add;
+  const cur = t.value.trim();
+  t.value = (cur ? cur + (/[.!?:]$/.test(cur) ? " " : ". ") : "") + add;
   t.focus();
+  if (add.endsWith(": ")) t.setSelectionRange(t.value.length, t.value.length);
+  else if (add.startsWith("Име:")) {
+    const at = t.value.lastIndexOf("Име Фамилия");
+    t.setSelectionRange(at, at + "Име Фамилия".length);
+  }
 });
+
+function updatePrev() {
+  const show = $("revise").checked && lastInstructions;
+  $("prev").classList.toggle("hidden", !show);
+  if (show) $("prev").innerHTML = `<b>Досега:</b> ${esc(lastInstructions)}`;
+  $("instructions").placeholder = $("revise").checked
+    ? "Какво да променя? Напр.: по-малко zoom, махни музиката, заглавието да е „…“"
+    : "Напр.: Заглавие: 3 ТРИКА ЗА МОНТАЖ. Име: Иван Петров - видео монтажист. Crash zoom когато казвам числа, без музика.";
+}
+$("revise").onchange = updatePrev;
 
 $("newProject").onclick = () => { if (confirm("Да започна ли нов празен проект?")) ensureProject(true); };
 
+// ------------------------------------------------------------------ editing
+function setRunning(on) {
+  $("go").disabled = on;
+  $("go").textContent = on ? "Монтирам…" : "Монтирай ▶";
+  $("stop").classList.toggle("hidden", !on);
+  $("stop").disabled = false;
+}
+
 $("go").onclick = async () => {
-  $("go").disabled = true; $("summary").style.display = "none"; $("bar").style.width = "2%";
+  setRunning(true);
+  $("summary").style.display = "none"; $("bar").style.width = "2%"; $("clock").textContent = "";
   $("log").textContent = "Започвам…";
   const options = {
+    style: chosenStyle(), intensity: intensity(),
     pauses: $("pauses").value, output_format: $("format").value,
     caption_style: $("captionStyle").value, captions: $("captions").checked,
     language: $("language").value, whisper_model: $("whisper").value,
@@ -330,45 +485,83 @@ $("go").onclick = async () => {
     });
     poll(job);
   } catch (e) {
-    $("log").innerHTML = `<span class="err">${e.message}</span>`; $("go").disabled = false;
+    $("log").innerHTML = `<span class="err">${esc(e.message)}</span>`; setRunning(false);
   }
+};
+
+$("stop").onclick = async () => {
+  if (!currentJob) return;
+  $("stop").disabled = true;
+  try { await api(`/api/jobs/${currentJob}/cancel`, { method: "POST" }); } catch {}
 };
 
 function poll(job) {
   clearInterval(polling);
+  currentJob = job;
+  let misses = 0;
   polling = setInterval(async () => {
     let j;
-    try { j = await api(`/api/jobs/${job}`); } catch { return; }
-    $("bar").style.width = Math.max(2, j.progress * 100) + "%";
-    $("log").textContent = j.log.join("\n") || "…";
-    $("log").scrollTop = $("log").scrollHeight;
-    if (j.state === "running") return;
-    clearInterval(polling); $("go").disabled = false;
-    if (j.state === "error") {
-      $("log").innerHTML += `\n<span class="err">❌ ${j.error}</span>`;
+    try { j = await api(`/api/jobs/${job}`); misses = 0; }
+    catch (e) {
+      if (++misses === 5) $("log").innerHTML += '\n<span class="err">Не стигам до студиото. Още ли е пуснато в Терминала?</span>';
+      if (e.message.includes("Няма такава")) { clearInterval(polling); setRunning(false); }
       return;
     }
-    const r = j.result;
-    showVideo();
-    renderTimeline(r.timeline);
-    $("summaryText").textContent = r.summary;
-    const stat = (label, v) => `<span class="stat">${label} <b>${v}</b></span>`;
-    $("stats").innerHTML = stat("Дължина", `${r.raw_seconds}s → ${r.final_seconds}s`) +
-      stat("Кадри", r.cuts) + stat("Махнати дубли", r.dropped_takes) + stat("Zoom", r.zooms) +
-      stat("Звукови ефекти", r.sound_effects) + stat("Надписи", r.captions ? "да" : "не") +
-      stat("Монтаж от", r.planner === "claude" ? "Claude" : "Авто режим");
-    $("summary").style.display = "block";
-    $("revise").checked = true;
+    $("bar").style.width = Math.max(2, j.progress * 100) + "%";
+    $("clock").textContent = fmt(j.elapsed || 0);
+    const atBottom = $("log").scrollTop + $("log").clientHeight >= $("log").scrollHeight - 20;
+    $("log").textContent = j.log.join("\n") || "…";
+    if (atBottom) $("log").scrollTop = $("log").scrollHeight;
+    if (j.state === "running") return;
+    clearInterval(polling); setRunning(false); currentJob = null;
+    if (j.state === "error") {
+      $("log").innerHTML += `\n<span class="err">❌ ${esc(j.error)}</span>`;
+      $("log").scrollTop = $("log").scrollHeight;
+      return;
+    }
+    if (j.state !== "done") return;
+    showResult(j.result);
   }, 1000);
 }
 
-// ------------------------------------------------------------------ timeline
-const ZOOM_NAME = { none: "без zoom", punch_in: "zoom in", slow_zoom_in: "бавен zoom in", slow_zoom_out: "бавен zoom out" };
-const TRANS_NAME = { fade: "плавен преход", whoosh_slide: "плъзгане", flash: "бяла светкавица" };
-const SFX_ICON = { whoosh: "💨", pop: "🫧", click: "🖱️", boom: "💥", ding: "🔔" };
-let timelineData = null;
+function showResult(r) {
+  showVideo();
+  renderTimeline(r.timeline);
+  $("summaryText").textContent = r.summary;
+  const stat = (label, v) => `<span class="stat">${label} <b>${v}</b></span>`;
+  $("stats").innerHTML =
+    stat("Дължина", `${r.raw_seconds}s → ${r.final_seconds}s`) + stat("Кадри", r.cuts) +
+    stat("Махнати дубли", r.dropped_takes) + stat("Движения на камерата", r.camera_moves) +
+    stat("Ефекти и преходи", r.effects) + stat("B-roll", r.broll) +
+    stat("Звукови ефекти", r.sound_effects) + stat("Графики", r.graphics) +
+    stat("Надписи", r.captions ? "да" : "не") + stat("Стил", esc(r.timeline.style_name || r.style)) +
+    stat("Монтаж от", r.planner === "claude" ? "Claude" : "Авто режим");
+  $("summary").style.display = "block";
+  // Next time the text box holds only the correction; the earlier request is kept on the server.
+  lastInstructions = (($("revise").checked && lastInstructions ? lastInstructions + "\n" : "") +
+                      $("instructions").value).trim();
+  $("revise").checked = true;
+  $("instructions").value = "";
+  updatePrev();
+}
 
-function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+// ------------------------------------------------------------------ timeline
+const CAMERA = {
+  none: ["статичен кадър", "static"], punch_in: ["zoom in", "zoom"], push_in: ["бавно приближаване (dolly in)", "zoom"],
+  pull_out: ["бавно отдалечаване (dolly out)", "zoom"], crash_zoom: ["crash zoom", "crash"],
+  impact: ["удар (impact zoom)", "crash"], shake: ["треперене", "crash"], pan_left: ["панорама наляво", "move"],
+  pan_right: ["панорама надясно", "move"], tilt_up: ["наклон нагоре", "move"], tilt_down: ["наклон надолу", "move"],
+  float: ["плаваща камера", "move"],
+};
+const CAM_ICON = { zoom: "🔍", crash: "💥", move: "↔️", static: "" };
+const TRANS_NAME = { fade: "плавен преход", dip_black: "през черно", slide: "плъзгане", whip: "whip (размазване)",
+                     zoom: "zoom преход", glitch: "глич", flash: "бяла светкавица" };
+const EFFECT_NAME = { flash: "светкавица", glitch: "глич", light_leak: "светлинен отблясък", bw: "черно-бяло" };
+const SFX_ICON = { whoosh: "💨", swoosh: "🌬️", pop: "🫧", click: "🖱️", boom: "💥", ding: "🔔", riser: "📈",
+                   glitch: "📺", shutter: "📸", type: "⌨️" };
+const POPUP_NAME = { pop: "изскачащ текст", slide: "плъзгащ се текст", label: "етикет", stamp: "печат", typewriter: "пишеща машина" };
+const GRADE_NAME = { punchy: "наситени", warm: "топли", cool: "студени", cinematic: "кино (teal-orange)", bw: "черно-бели" };
+const REASON = { retake: "повторен дубъл", junk: "„ъъъ“ / кашлица", plan: "махнат по плана" };
 
 function renderTimeline(tl) {
   timelineData = tl;
@@ -379,41 +572,57 @@ function renderTimeline(tl) {
   const inner = $("tlInner");
   inner.style.width = Math.max(100, D * 4) + "%";
   inner.style.minWidth = Math.max(600, D * 45) + "px";
-  const pct = (t) => (100 * t / D).toFixed(3) + "%";
+  const pct = (t) => (100 * Math.max(0, Math.min(t, D)) / D).toFixed(3) + "%";
   const block = (cls, a, b, label, info) =>
     `<div class="tl-item ${cls}" style="left:${pct(a)};width:calc(${pct(Math.max(b - a, 0.05))} - 2px)" data-t="${a}" data-info="${esc(info)}">${esc(label)}</div>`;
   const mark = (icon, t, info) =>
     `<div class="tl-mark" style="left:${pct(t)}" data-t="${t}" data-info="${esc(info)}">${icon}</div>`;
-  const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
   const step = D > 180 ? 30 : D > 60 ? 10 : D > 20 ? 5 : 2;
   let ruler = "";
   for (let t = 0; t <= D; t += step) ruler += `<span style="left:${pct(t)}">${fmt(t)}</span>`;
 
-  const clips = tl.clips.map((c, i) => block("clip-" + c.zoom, c.start, c.end,
-    c.zoom === "none" ? `#${i + 1}` : `#${i + 1} 🔍`,
-    `<b>Кадър ${i + 1}</b> (${fmt(c.start)}–${fmt(c.end)}): ${ZOOM_NAME[c.zoom] || c.zoom}` +
-    (c.pause_removed ? `, махнах ${c.pause_removed}s пауза преди него` : "") +
-    (c.text ? ` · „${c.text}“` : "") + ` · от ${c.source} ${c.source_start}s–${c.source_end}s`)).join("");
-  const trans = tl.transitions.map((x) => mark("✨", x.t, `<b>Преход</b> в ${fmt(x.t)}: ${TRANS_NAME[x.kind] || x.kind}`)).join("");
-  const sfx = tl.sfx.map((x) => mark(SFX_ICON[x.name] || "🔊", x.t, `<b>Звуков ефект</b> „${x.name}“ в ${fmt(x.t)}`)).join("");
-  const pops = tl.popups.map((x) => block("tl-pop", x.start, x.end, x.text, `<b>Заглавие</b> в ${fmt(x.start)}: „${x.text}“`)).join("");
-  const caps = tl.captions.map((x) => block("tl-cap", x.start, x.end, x.text, `<b>Надпис</b> ${fmt(x.start)}: „${x.text}“`)).join("");
+  const lanes = [];
+  lanes.push(["🎬 Кадри", tl.clips.map((c, i) => {
+    const [name, group] = CAMERA[c.camera] || [c.camera, "zoom"];
+    return block("cam-" + group, c.start, c.end, `#${i + 1} ${CAM_ICON[group]}`,
+      `<b>Кадър ${i + 1}</b> (${fmt(c.start)}–${fmt(c.end)}): ${name}` +
+      (c.effect && c.effect !== "none" ? ` + ${EFFECT_NAME[c.effect] || c.effect}` : "") +
+      (c.pause_removed ? `, махнах ${c.pause_removed}s пауза преди него` : "") +
+      (c.text ? ` · „${c.text}“` : "") + ` · от ${c.source} ${c.source_start}s–${c.source_end}s`);
+  }).join("")]);
+  const brolls = tl.clips.filter((c) => c.broll);
+  if (brolls.length) lanes.push(["🖼️ B-roll", brolls.map((c) =>
+    block("tl-broll", c.start, c.broll_end || c.end, c.broll, `<b>B-roll</b> „${c.broll}“ в ${fmt(c.start)}`)).join("")]);
+  const fx = tl.transitions.map((x) => mark("✨", x.t, `<b>Преход</b> в ${fmt(x.t)}: ${TRANS_NAME[x.kind] || x.kind}`))
+    .concat(tl.clips.filter((c) => c.effect && c.effect !== "none").map((c) =>
+      mark("⚡", c.start + 0.15, `<b>Ефект</b> в ${fmt(c.start)}: ${EFFECT_NAME[c.effect] || c.effect}`)));
+  lanes.push(["✨ Ефекти", fx.join("")]);
+  lanes.push(["🔊 Звуци", tl.sfx.map((x) => mark(SFX_ICON[x.name] || "🔊", x.t, `<b>Звуков ефект</b> „${x.name}“ в ${fmt(x.t)}`)).join("")]);
+  const gfx = tl.popups.map((x) => block("tl-pop", x.start, x.end, x.text,
+    `<b>${POPUP_NAME[x.style] || "Текст"}</b> в ${fmt(x.start)}: „${x.text}“`));
+  if (tl.lower_third) gfx.push(block("tl-lt", tl.lower_third.start, tl.lower_third.end, tl.lower_third.title,
+    `<b>Име отдолу</b> в ${fmt(tl.lower_third.start)}: ${tl.lower_third.title}` +
+    (tl.lower_third.subtitle ? ` – ${tl.lower_third.subtitle}` : "")));
+  lanes.push(["🏷️ Графики", gfx.join("")]);
+  lanes.push(["💬 Надписи", tl.captions.map((x) => block("tl-cap", x.start, x.end, x.text, `<b>Надпис</b> ${fmt(x.start)}: „${x.text}“`)).join("")]);
 
-  inner.innerHTML =
-    `<div class="tl-ruler">${ruler}</div>` +
-    [clips, trans, sfx, pops, caps].map((l) => `<div class="tl-row"><div class="tl-lane">${l}</div></div>`).join("") +
-    `<div class="tl-head" id="tlHead"></div>`;
+  $("tlNames").innerHTML = "<div></div>" + lanes.map(([n]) => `<div>${n}</div>`).join("");
+  inner.innerHTML = `<div class="tl-ruler">${ruler}</div>` +
+    lanes.map(([, l]) => `<div class="tl-row">${l}</div>`).join("") + `<div class="tl-head" id="tlHead"></div>`;
 
-  const removed = [];
-  if (tl.removed_takes?.length) removed.push(`махнати дубли: ${tl.removed_takes.length}`);
+  const extra = [];
+  if (tl.style_name) extra.push(`стил: ${tl.style_name}`);
+  const removed = tl.removed || (tl.removed_takes || []).map((t) => ({ text: t, reason: "plan" }));
+  if (removed.length) extra.push(`<span title="${esc(removed.map((r) => `– ${r.text} (${REASON[r.reason] || r.reason})`).join("\n"))}" style="text-decoration:underline dotted;cursor:help">махнати дубли: ${removed.length}</span>`);
   const pauses = tl.clips.reduce((a, c) => a + (c.pause_removed || 0), 0);
-  if (pauses) removed.push(`махнати паузи: ${pauses.toFixed(1)}s`);
-  if (tl.color_grade && tl.color_grade !== "none") removed.push(`цветове: ${tl.color_grade}`);
-  if (tl.music) removed.push(`музика: ${tl.music}`);
-  $("tlRemoved").textContent = removed.join(" · ");
-  if (tl.removed_takes?.length)
-    $("tlRemoved").title = "Махнати дубли:\n" + tl.removed_takes.map((t) => "– " + t).join("\n");
+  if (pauses) extra.push(`махнати паузи: ${pauses.toFixed(1)}s`);
+  if (tl.color_grade && tl.color_grade !== "none") extra.push(`цветове: ${GRADE_NAME[tl.color_grade] || tl.color_grade}`);
+  if (tl.letterbox) extra.push("черни ленти");
+  if (tl.grain) extra.push("филмово зърно");
+  if (tl.progress_bar) extra.push("лента за прогрес");
+  if (tl.music) extra.push(`музика: ${esc(tl.music)}`);
+  $("tlExtra").innerHTML = extra.join(" · ");
 }
 
 $("tlInner").addEventListener("mousemove", (e) => {
@@ -431,7 +640,7 @@ $("tlInner").addEventListener("click", (e) => {
 (function tick() {
   const v = $("screen").querySelector("video"), head = $("tlHead");
   if (v && head && timelineData) {
-    head.style.left = (100 * v.currentTime / timelineData.duration) + "%";
+    head.style.left = (100 * Math.min(v.currentTime, timelineData.duration) / timelineData.duration) + "%";
     if (!v.paused) {
       const sc = $("tlScroll"), x = head.offsetLeft;
       if (x < sc.scrollLeft || x > sc.scrollLeft + sc.clientWidth - 40) sc.scrollLeft = x - 40;
@@ -440,16 +649,25 @@ $("tlInner").addEventListener("click", (e) => {
   requestAnimationFrame(tick);
 })();
 
+// ------------------------------------------------------------------ start
 (async () => {
   try {
     const s = await api("/api/status");
     $("mode").textContent = s.claude ? "Claude е включен" : "Авто режим (безплатно)";
     $("mode").classList.toggle("on", s.claude);
-    $("mode").title = s.claude ? "Claude чете какво казваш и решава монтажа."
+    $("mode").title = s.claude ? "Claude гледа кадрите, чете какво казваш и решава монтажа."
       : "Монтира по правила, без интернет и без пари. За Claude виж README.";
-    if (!s.claude) $("claudeRow").classList.add("hidden");
-    if (!s.ffmpeg) $("log").innerHTML = '<span class="err">ffmpeg не е инсталиран – виж README.</span>';
-  } catch {}
+    $("claudeRow").classList.toggle("hidden", !s.claude);
+    renderStyles(s.styles || [], s.default_style || "viral");
+    const warn = [];
+    if (!s.ffmpeg) warn.push("ffmpeg липсва, затова не мога да монтирам. Mac: затвори студиото и пусни <code>bash start.sh</code> пак (то го инсталира), или в Терминал: <code>brew install ffmpeg-full</code>");
+    else if (!s.text) warn.push("Твоят ffmpeg не може да рисува текст, затова видеото ще е <b>без надписи и заглавия</b>. Mac: в Терминал пусни <code>brew install ffmpeg-full</code> и рестартирай студиото.");
+    if (!s.speech) warn.push("Няма разпознаване на реч, затова няма надписи и не махам повторените дубли. Mac: <code>brew install whisper-cpp</code> и рестартирай студиото.");
+    $("warnings").innerHTML = warn.map((w) => `<div class="warning">⚠️ ${w}</div>`).join("");
+    if (s.speech) { $("speech").textContent = `Реч: ${s.speech}`; $("speech").classList.remove("hidden"); }
+  } catch {
+    renderStyles([], "viral");
+  }
   await ensureProject();
 })();
 </script>
