@@ -13,8 +13,8 @@ REM running it: the updater may replace this file while it runs.
   )
   if not exist .venv (
     echo Първо пускане: инсталирам нужното, отнема 1-2 минути...
-    py -3.12 -m venv .venv 2>nul || py -3.13 -m venv .venv 2>nul || py -3.11 -m venv .venv 2>nul || python -m venv .venv || (
-      echo Инсталирай Python 3.12 от python.org и сложи отметка на "Add python.exe to PATH".
+    py -3 -m venv .venv 2>nul || python -m venv .venv || (
+      echo Инсталирай Python от python.org и сложи отметка на "Add python.exe to PATH".
       pause
       exit /b 1
     )
@@ -28,6 +28,7 @@ REM running it: the updater may replace this file while it runs.
     pause
     exit /b 1
   )
+  .venv\Scripts\python -c "import faster_whisper" 2>nul || .venv\Scripts\python -m pip install -q -r requirements-whisper.txt 2>nul || echo Без надписи: тази версия на Python не поддържа разпознаване на реч. Python 3.12 от python.org я поддържа.
   if exist .env for /f "usebackq eol=# tokens=1,* delims==" %%a in (".env") do set "%%a=%%b"
   .venv\Scripts\python -m studio
   pause

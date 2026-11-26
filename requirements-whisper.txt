@@ -1,0 +1,4 @@
+# Optional: speech recognition for captions inside Python.
+# Only has ready-made builds for some Python versions. If it does not install,
+# the studio uses the whisper.cpp tool instead (Mac: brew install whisper-cpp).
+faster-whisper>=1.0

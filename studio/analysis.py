@@ -108,11 +108,22 @@ _whisper_cache: dict[str, object] = {}
 
 
 def transcribe(path: Path, model_size: str = "small", language: str | None = None) -> list[Word]:
-    """Word-level transcript with faster-whisper. Returns [] if it is not installed."""
+    """Word-level transcript.
+
+    Uses faster-whisper when it is installed, otherwise the whisper.cpp command line
+    tool (`brew install whisper-cpp`), which works with any Python version.
+    Returns [] when neither is available.
+    """
     try:
-        from faster_whisper import WhisperModel
+        from faster_whisper import WhisperModel  # noqa: F401
     except ImportError:
-        return []
+        return _transcribe_whisper_cpp(path, model_size, language)
+    return _transcribe_faster_whisper(path, model_size, language)
+
+
+def _transcribe_faster_whisper(path: Path, model_size: str, language: str | None) -> list[Word]:
+    from faster_whisper import WhisperModel
+
     model = _whisper_cache.get(model_size)
     if model is None:
         model = WhisperModel(model_size, device="auto", compute_type="int8")
@@ -126,6 +137,65 @@ def transcribe(path: Path, model_size: str = "small", language: str | None = Non
             text = w.word.strip()
             if text:
                 words.append(Word(text, float(w.start), float(w.end)))
+    return words
+
+
+WHISPER_CPP_BINARIES = ("whisper-cli", "whisper-cpp")
+MODEL_URL = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-{size}.bin"
+
+
+def whisper_cpp_binary() -> str | None:
+    import shutil
+
+    return next((shutil.which(n) for n in WHISPER_CPP_BINARIES if shutil.which(n)), None)
+
+
+def _whisper_cpp_model(size: str) -> Path:
+    import urllib.request
+
+    cache = Path.home() / ".cache" / "ai-video-studio"
+    cache.mkdir(parents=True, exist_ok=True)
+    model = cache / f"ggml-{size}.bin"
+    if not model.exists() or model.stat().st_size < 1_000_000:
+        tmp = model.with_suffix(".part")
+        urllib.request.urlretrieve(MODEL_URL.format(size=size), tmp)
+        tmp.replace(model)
+    return model
+
+
+def _transcribe_whisper_cpp(path: Path, model_size: str, language: str | None) -> list[Word]:
+    import json
+    import tempfile
+
+    binary = whisper_cpp_binary()
+    if binary is None:
+        return []
+    model = _whisper_cpp_model(model_size)
+    with tempfile.TemporaryDirectory() as tmp:
+        wav = Path(tmp) / "audio.wav"
+        run(["ffmpeg", "-y", "-hide_banner", "-i", str(path), "-vn", "-ar", "16000", "-ac", "1",
+             "-c:a", "pcm_s16le", str(wav)])
+        out = Path(tmp) / "words"
+        # -ml 1 + -sow: one output segment per word, so its offsets are word timings.
+        run([binary, "-m", str(model), "-f", str(wav), "-l", language or "auto",
+             "-ml", "1", "-sow", "-oj", "-of", str(out), "-np"])
+        data = json.loads((out.with_suffix(".json")).read_text("utf-8", errors="replace"))
+    return parse_whisper_cpp_json(data)
+
+
+def parse_whisper_cpp_json(data: dict) -> list[Word]:
+    words = []
+    for seg in data.get("transcription", []):
+        text = (seg.get("text") or "").strip()
+        off = seg.get("offsets") or {}
+        if not text or text.startswith("[") or "from" not in off:
+            continue
+        start, end = off["from"] / 1000, off["to"] / 1000
+        if words and not seg["text"].startswith(" ") and words[-1].end >= start - 0.01:
+            # Continuation of the previous word (whisper.cpp splits some words in pieces).
+            words[-1] = Word(words[-1].text + text, words[-1].start, end)
+        else:
+            words.append(Word(text, start, max(end, start + 0.05)))
     return words
 
 
