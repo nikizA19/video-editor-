@@ -2,6 +2,13 @@
 chcp 65001 >nul
 REM Windows: double-click this file
 cd /d "%~dp0"
+REM Auto-update: if this folder was cloned with git, grab the latest version.
+if exist .git (
+  where git >nul 2>nul && (
+    echo Проверявам за нова версия...
+    git pull --ff-only -q || echo ^(Не успях да обновя, пускам текущата версия.^)
+  )
+)
 where ffmpeg >nul 2>nul
 if errorlevel 1 (
   echo ffmpeg липсва. Отвори PowerShell и пусни:  winget install Gyan.FFmpeg
