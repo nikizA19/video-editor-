@@ -160,11 +160,39 @@ def run_edit(project: Path, instructions: str, options: dict,
     render.final_mix(joined, out, work, plan, ass, sfx_events, music, total)
     progress(1.0)
 
+    final_seconds = stream_duration(out)
+    timeline = {
+        "duration": round(final_seconds, 2),
+        "clips": [
+            {"start": round(starts[k], 2), "end": round(starts[k] + durations[k], 2),
+             "zoom": edits[seg.index].zoom, "text": seg.text,
+             "source": infos[seg.source].path.name,
+             "source_start": round(seg.start, 2), "source_end": round(seg.end, 2),
+             "pause_removed": seg.pause_before}
+            for k, seg in enumerate(kept)
+        ],
+        "transitions": [{"t": round(starts[k], 2), "kind": transitions[k]}
+                        for k in range(1, len(kept)) if transitions[k] != "cut"],
+        "sfx": [{"t": round(t, 2), "name": n} for n, t in sorted(sfx_events, key=lambda e: e[1])],
+        "popups": [{"start": round(t, 2), "end": round(t + 1.6, 2), "text": txt} for txt, t in popups],
+        "captions": [
+            {"start": round(c[0][1], 2), "end": round(c[-1][2], 2),
+             "text": " ".join(w[0] for w in c)}
+            for c in render.caption_chunks(timed_words, plan.words_per_caption)
+        ] if plan.captions and timed_words else [],
+        "removed_takes": [s.text or f"{s.start:.1f}s-{s.end:.1f}s" for s in segments
+                          if not edits[s.index].keep],
+        "color_grade": plan.color_grade,
+        "music": music.name if music else None,
+    }
+    (out_dir / "timeline.json").write_text(json.dumps(timeline, ensure_ascii=False), "utf-8")
+
     result = {
         "output": str(out),
+        "timeline": timeline,
         "summary": plan.summary,
         "raw_seconds": round(raw_total, 1),
-        "final_seconds": round(stream_duration(out), 1),
+        "final_seconds": round(final_seconds, 1),
         "cuts": len(kept),
         "dropped_takes": sum(1 for e in plan.segments if not e.keep),
         "zooms": sum(1 for s in kept if edits[s.index].zoom != "none"),

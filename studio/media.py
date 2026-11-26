@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -92,6 +93,34 @@ def stream_duration(path: Path) -> float:
         if s.get("duration"):
             return float(s["duration"])
     return float(data.get("format", {}).get("duration") or 0)
+
+
+_ffmpeg_major: int | None = None
+
+
+def ffmpeg_major() -> int:
+    """Major version of the installed ffmpeg (99 for git builds without a number)."""
+    global _ffmpeg_major
+    if _ffmpeg_major is None:
+        out = subprocess.run(["ffmpeg", "-hide_banner", "-version"], capture_output=True, text=True)
+        m = re.search(r"ffmpeg version n?(\d+)\.", out.stdout)
+        _ffmpeg_major = int(m.group(1)) if m else 99
+    return _ffmpeg_major
+
+
+def filter_graph_args(graph: str, script: Path) -> list[str]:
+    """Arguments that hand ffmpeg a filter graph.
+
+    Short graphs go inline (works on every ffmpeg). Long ones go through a file:
+    ffmpeg 7+ reads it with `-/filter_complex FILE` (ffmpeg 8 removed the old
+    `-filter_complex_script`, which versions before 7 still need).
+    """
+    if len(graph) < 6000:
+        return ["-filter_complex", graph]
+    script.write_text(graph, encoding="utf-8")
+    if ffmpeg_major() >= 7:
+        return ["-/filter_complex", str(script)]
+    return ["-filter_complex_script", str(script)]
 
 
 def even(x: float) -> int:

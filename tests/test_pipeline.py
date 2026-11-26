@@ -83,6 +83,11 @@ def test_full_edit(project):
     assert r["dropped_takes"] == 1
     assert r["captions"] is True
     assert r["zooms"] >= 1
+    tl = r["timeline"]
+    assert len(tl["clips"]) == r["cuts"] and tl["captions"] and tl["popups"][0]["text"] == "3 TRIKA"
+    assert tl["clips"][-1]["end"] <= tl["duration"] + 0.1
+    assert len(tl["removed_takes"]) == 1
+    assert (project / "output" / "timeline.json").exists()
     ass = (project / "work" / "captions.ass").read_text("utf-8")
     assert "3 TRIKA" in ass and "welcome" in ass
 
@@ -112,3 +117,4 @@ def test_transitions_render(project, monkeypatch):
     r = pipeline.run_edit(project, "", {"pauses": "normal"}, log=lambda m: None)
     assert Path(r["output"]).exists()
     assert r["sound_effects"] >= 1
+    assert r["timeline"]["transitions"] and r["timeline"]["sfx"]

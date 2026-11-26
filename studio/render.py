@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Callable
 
 from .analysis import Segment
-from .media import MediaInfo, even, run, stream_duration
+from .media import MediaInfo, even, filter_graph_args, run, stream_duration
 from .planner import EditPlan
 
 ASSET_SFX = Path(__file__).parent / "assets" / "sfx"
@@ -157,9 +157,8 @@ def join_segments(files: list[Path], durations: list[float], transitions: list[s
     for f in files:
         cmd += ["-i", str(f)]
     if parts:
-        script = out.with_suffix(".filter.txt")
-        script.write_text(";\n".join(parts), encoding="utf-8")
-        cmd += ["-filter_complex_script", str(script), "-map", cur_v, "-map", cur_a]
+        cmd += [*filter_graph_args(";".join(parts), out.with_suffix(".filter.txt")),
+                "-map", cur_v, "-map", cur_a]
     else:
         cmd += ["-map", "0:v", "-map", "0:a"]
     cmd += ["-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p",
@@ -190,6 +189,19 @@ CAPTION_STYLES = {
 HIGHLIGHT = {"bold_yellow": "&H0000E5FF&", "clean_white": "&H00FFFFFF&", "boxed": "&H0000E5FF&"}
 
 
+def caption_chunks(timed_words: list[tuple[str, float, float, int]], per_caption: int):
+    """Group words into the short phrases shown on screen together."""
+    chunks: list[list[tuple[str, float, float, int]]] = []
+    for w in timed_words:
+        if (not chunks or len(chunks[-1]) >= per_caption
+                or w[3] != chunks[-1][-1][3]  # never run a caption across a cut
+                or w[1] - chunks[-1][-1][2] > 0.6
+                or chunks[-1][-1][0][-1:] in ".!?,"):
+            chunks.append([])
+        chunks[-1].append(w)
+    return chunks
+
+
 def write_ass(path: Path, frame: Frame, plan: EditPlan, timed_words: list[tuple[str, float, float, int]],
               popups: list[tuple[str, float]]) -> None:
     W, H = frame.width, frame.height
@@ -213,14 +225,7 @@ def write_ass(path: Path, frame: Frame, plan: EditPlan, timed_words: list[tuple[
     ]
     hl = HIGHLIGHT[plan.caption_style]
     if plan.captions and timed_words:
-        chunks: list[list[tuple[str, float, float, int]]] = []
-        for w in timed_words:
-            if (not chunks or len(chunks[-1]) >= plan.words_per_caption
-                    or w[3] != chunks[-1][-1][3]  # never run a caption across a cut
-                    or w[1] - chunks[-1][-1][2] > 0.6
-                    or chunks[-1][-1][0][-1:] in ".!?,"):
-                chunks.append([])
-            chunks[-1].append(w)
+        chunks = caption_chunks(timed_words, plan.words_per_caption)
         for ci, chunk in enumerate(chunks):
             chunk_end = chunk[-1][2] + 0.15
             if ci + 1 < len(chunks):
@@ -294,9 +299,8 @@ def final_mix(joined: Path, out: Path, workdir: Path, plan: EditPlan, ass: Path 
     filters.append(f"{''.join(audio_inputs)}amix=inputs={len(audio_inputs)}:normalize=0:"
                    "duration=first,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]")
 
-    script = workdir / "final.filter.txt"
-    script.write_text(";\n".join(filters), encoding="utf-8")
-    cmd += ["-filter_complex_script", script.name, "-map", "[v]", "-map", "[a]",
+    cmd += [*filter_graph_args(";".join(filters), workdir / "final.filter.txt"),
+            "-map", "[v]", "-map", "[a]",
             "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
             "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(out.resolve())]
     run(cmd, cwd=workdir)

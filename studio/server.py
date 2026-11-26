@@ -1,6 +1,7 @@
 """The studio web app. Start with:  python -m studio  (then open http://localhost:8000)"""
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -64,7 +65,14 @@ def get_project(pid: str):
     files = {k: sorted(f.name for f in (p / k).iterdir() if f.is_file()) if (p / k).exists() else []
              for k in KINDS}
     out = p / "output" / "edited.mp4"
-    return {"id": pid, "files": files, "has_output": out.exists()}
+    tl = p / "output" / "timeline.json"
+    timeline = None
+    if out.exists() and tl.exists():
+        try:
+            timeline = json.loads(tl.read_text("utf-8"))
+        except ValueError:
+            timeline = None
+    return {"id": pid, "files": files, "has_output": out.exists(), "timeline": timeline}
 
 
 @app.post("/api/projects/{pid}/upload/{kind}")
