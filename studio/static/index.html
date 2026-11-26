@@ -75,6 +75,37 @@
   .tips li { margin-bottom: 6px; }
   .tips b { color: var(--text); }
   .err { color: var(--err); }
+  .tl { display: none; }
+  .tl-scroll { overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; }
+  .tl-inner { position: relative; min-width: 100%; cursor: pointer; user-select: none; }
+  .tl-row { display: flex; align-items: center; height: 30px; border-bottom: 1px solid var(--line); }
+  .tl-row:last-child { border-bottom: 0; }
+  .tl-lane { position: relative; flex: 1; height: 100%; }
+  .tl-labels { position: sticky; left: 0; }
+  .tl-grid { display: grid; grid-template-columns: 92px 1fr; }
+  .tl-names div { height: 30px; display: flex; align-items: center; font-size: 12px; color: var(--muted);
+                  border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tl-names div:first-child, .tl-ruler { height: 22px !important; }
+  .tl-ruler { position: relative; border-bottom: 1px solid var(--line); font-size: 10.5px; color: var(--muted); }
+  .tl-ruler span { position: absolute; top: 3px; transform: translateX(-50%); }
+  .tl-ruler span:first-child { transform: none; }
+  .tl-ruler span::after { content: ""; position: absolute; left: 50%; top: 14px; height: 5px; border-left: 1px solid var(--line); }
+  .tl-item { position: absolute; top: 5px; bottom: 5px; border-radius: 5px; font-size: 11px; line-height: 20px;
+             padding: 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #0f1115; }
+  .tl-item:hover { outline: 2px solid #fff; z-index: 2; }
+  .clip-none { background: #5c7cfa; color: #fff; }
+  .clip-punch_in { background: var(--accent); }
+  .clip-slow_zoom_in, .clip-slow_zoom_out { background: #ff922b; }
+  .tl-cap { background: #3b4252; color: var(--text); }
+  .tl-pop { background: #f783ac; }
+  .tl-mark { position: absolute; top: 4px; transform: translateX(-50%); font-size: 15px; line-height: 20px; }
+  .tl-mark:hover { transform: translateX(-50%) scale(1.3); }
+  .tl-head { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; pointer-events: none;
+             box-shadow: 0 0 6px #000; z-index: 3; }
+  .tl-info { font-size: 13px; color: var(--muted); min-height: 20px; margin-top: 8px; }
+  .tl-info b { color: var(--text); }
+  .tl-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .tl-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -104,6 +135,23 @@
   <!-- CENTER: preview + progress -->
   <section class="stage">
     <div class="screen" id="screen"><div class="empty">Тук ще се появи готовото видео.<br>Качи клип, напиши какво искаш и натисни „Монтирай“.</div></div>
+    <div class="panel tl" id="timeline">
+      <h2>Какво добавих (timeline)</h2>
+      <div class="tl-grid">
+        <div class="tl-names">
+          <div></div><div>🎬 Кадри</div><div>✨ Преходи</div><div>🔊 Звуци</div><div>🏷️ Текст</div><div>💬 Надписи</div>
+        </div>
+        <div class="tl-scroll" id="tlScroll"><div class="tl-inner" id="tlInner"></div></div>
+      </div>
+      <div class="tl-info" id="tlInfo">Посочи нещо, за да видиш детайли. Цъкни, за да отидеш там във видеото.</div>
+      <div class="tl-legend">
+        <span><i style="background:#5c7cfa"></i>нормален кадър</span>
+        <span><i style="background:var(--accent)"></i>zoom in</span>
+        <span><i style="background:#ff922b"></i>бавен zoom</span>
+        <span><i style="background:#f783ac"></i>заглавие</span>
+        <span id="tlRemoved"></span>
+      </div>
+    </div>
     <div class="panel">
       <div class="bar"><div id="bar"></div></div>
       <div class="log" id="log" style="margin-top:10px">Чакам те 🙂</div>
@@ -204,6 +252,7 @@ async function ensureProject(forceNew = false) {
   project = p.id; storeProject(project);
   render(await api(`/api/projects/${project}`));
   $("screen").innerHTML = '<div class="empty">Нов проект. Качи клип, за да започнем.</div>';
+  renderTimeline(null);
   $("summary").style.display = "none";
 }
 
@@ -222,6 +271,7 @@ function render(p) {
     }
   }
   if (p.has_output && !$("screen").querySelector("video")) showVideo();
+  if (p.timeline && !timelineData) renderTimeline(p.timeline);
 }
 
 function showVideo() {
@@ -300,6 +350,7 @@ function poll(job) {
     }
     const r = j.result;
     showVideo();
+    renderTimeline(r.timeline);
     $("summaryText").textContent = r.summary;
     const stat = (label, v) => `<span class="stat">${label} <b>${v}</b></span>`;
     $("stats").innerHTML = stat("Дължина", `${r.raw_seconds}s → ${r.final_seconds}s`) +
@@ -310,6 +361,84 @@ function poll(job) {
     $("revise").checked = true;
   }, 1000);
 }
+
+// ------------------------------------------------------------------ timeline
+const ZOOM_NAME = { none: "без zoom", punch_in: "zoom in", slow_zoom_in: "бавен zoom in", slow_zoom_out: "бавен zoom out" };
+const TRANS_NAME = { fade: "плавен преход", whoosh_slide: "плъзгане", flash: "бяла светкавица" };
+const SFX_ICON = { whoosh: "💨", pop: "🫧", click: "🖱️", boom: "💥", ding: "🔔" };
+let timelineData = null;
+
+function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+
+function renderTimeline(tl) {
+  timelineData = tl;
+  const box = $("timeline");
+  if (!tl || !tl.duration) { box.style.display = "none"; return; }
+  box.style.display = "block";
+  const D = tl.duration;
+  const inner = $("tlInner");
+  inner.style.width = Math.max(100, D * 4) + "%";
+  inner.style.minWidth = Math.max(600, D * 45) + "px";
+  const pct = (t) => (100 * t / D).toFixed(3) + "%";
+  const block = (cls, a, b, label, info) =>
+    `<div class="tl-item ${cls}" style="left:${pct(a)};width:calc(${pct(Math.max(b - a, 0.05))} - 2px)" data-t="${a}" data-info="${esc(info)}">${esc(label)}</div>`;
+  const mark = (icon, t, info) =>
+    `<div class="tl-mark" style="left:${pct(t)}" data-t="${t}" data-info="${esc(info)}">${icon}</div>`;
+  const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+
+  const step = D > 180 ? 30 : D > 60 ? 10 : D > 20 ? 5 : 2;
+  let ruler = "";
+  for (let t = 0; t <= D; t += step) ruler += `<span style="left:${pct(t)}">${fmt(t)}</span>`;
+
+  const clips = tl.clips.map((c, i) => block("clip-" + c.zoom, c.start, c.end,
+    c.zoom === "none" ? `#${i + 1}` : `#${i + 1} 🔍`,
+    `<b>Кадър ${i + 1}</b> (${fmt(c.start)}–${fmt(c.end)}): ${ZOOM_NAME[c.zoom] || c.zoom}` +
+    (c.pause_removed ? `, махнах ${c.pause_removed}s пауза преди него` : "") +
+    (c.text ? ` · „${c.text}“` : "") + ` · от ${c.source} ${c.source_start}s–${c.source_end}s`)).join("");
+  const trans = tl.transitions.map((x) => mark("✨", x.t, `<b>Преход</b> в ${fmt(x.t)}: ${TRANS_NAME[x.kind] || x.kind}`)).join("");
+  const sfx = tl.sfx.map((x) => mark(SFX_ICON[x.name] || "🔊", x.t, `<b>Звуков ефект</b> „${x.name}“ в ${fmt(x.t)}`)).join("");
+  const pops = tl.popups.map((x) => block("tl-pop", x.start, x.end, x.text, `<b>Заглавие</b> в ${fmt(x.start)}: „${x.text}“`)).join("");
+  const caps = tl.captions.map((x) => block("tl-cap", x.start, x.end, x.text, `<b>Надпис</b> ${fmt(x.start)}: „${x.text}“`)).join("");
+
+  inner.innerHTML =
+    `<div class="tl-ruler">${ruler}</div>` +
+    [clips, trans, sfx, pops, caps].map((l) => `<div class="tl-row"><div class="tl-lane">${l}</div></div>`).join("") +
+    `<div class="tl-head" id="tlHead"></div>`;
+
+  const removed = [];
+  if (tl.removed_takes?.length) removed.push(`махнати дубли: ${tl.removed_takes.length}`);
+  const pauses = tl.clips.reduce((a, c) => a + (c.pause_removed || 0), 0);
+  if (pauses) removed.push(`махнати паузи: ${pauses.toFixed(1)}s`);
+  if (tl.color_grade && tl.color_grade !== "none") removed.push(`цветове: ${tl.color_grade}`);
+  if (tl.music) removed.push(`музика: ${tl.music}`);
+  $("tlRemoved").textContent = removed.join(" · ");
+  if (tl.removed_takes?.length)
+    $("tlRemoved").title = "Махнати дубли:\n" + tl.removed_takes.map((t) => "– " + t).join("\n");
+}
+
+$("tlInner").addEventListener("mousemove", (e) => {
+  const el = e.target.closest("[data-info]");
+  if (el) $("tlInfo").innerHTML = el.dataset.info;
+});
+$("tlInner").addEventListener("click", (e) => {
+  const v = $("screen").querySelector("video");
+  if (!v || !timelineData) return;
+  const el = e.target.closest("[data-t]");
+  const rect = $("tlInner").getBoundingClientRect();
+  const t = el ? parseFloat(el.dataset.t) : (e.clientX - rect.left) / rect.width * timelineData.duration;
+  v.currentTime = Math.max(0, Math.min(t, timelineData.duration - 0.05));
+});
+(function tick() {
+  const v = $("screen").querySelector("video"), head = $("tlHead");
+  if (v && head && timelineData) {
+    head.style.left = (100 * v.currentTime / timelineData.duration) + "%";
+    if (!v.paused) {
+      const sc = $("tlScroll"), x = head.offsetLeft;
+      if (x < sc.scrollLeft || x > sc.scrollLeft + sc.clientWidth - 40) sc.scrollLeft = x - 40;
+    }
+  }
+  requestAnimationFrame(tick);
+})();
 
 (async () => {
   try {
